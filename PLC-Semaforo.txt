@@ -1,0 +1,83 @@
+VAR
+    timerRed: TON;      // Timer per il rosso
+    timerYellow: TON;   // Timer per il giallo
+    timerGreen: TON;    // Timer per il verde
+    timerFlashing: TON; // Timer per il lampeggio
+
+    red: BOOL := TRUE;    // Variabile per il rosso
+    yellow: BOOL := FALSE; // Variabile per il giallo
+    green: BOOL := FALSE;  // Variabile per il verde
+    flashing: BOOL := FALSE; // Variabile per il lampeggio
+
+    cycleTime: INT := 0;  // Tempo totale del ciclo del semaforo
+    redTime: INT := 30;   // Durata in secondi del rosso
+    yellowTime: INT := 5; // Durata in secondi del giallo
+    greenTime: INT := 20; // Durata in secondi del verde
+    flashingTime: INT := 1; // Durata in secondi del lampeggio
+
+    lampRed: BOOL;       // Uscita per la luce rossa
+    lampYellow: BOOL;    // Uscita per la luce gialla
+    lampGreen: BOOL;     // Uscita per la luce verde
+    lampFlashing: BOOL;  // Uscita per la luce lampeggiante
+END_VAR
+
+// Funzione di inizializzazione
+METHOD Init:
+    timerRed(IN:= FALSE, PT:= T#10S); // Inizializzazione timer rosso
+    timerYellow(IN:= FALSE, PT:= T#10S); // Inizializzazione timer giallo
+    timerGreen(IN:= FALSE, PT:= T#10S); // Inizializzazione timer verde
+    timerFlashing(IN:= FALSE, PT:= T#10S); // Inizializzazione timer lampeggio
+END_METHOD
+
+// Funzione di gestione del semaforo
+METHOD ManageTrafficLight:
+    IF NOT flashing THEN
+        // Gestione stato rosso
+        IF timerRed.Q THEN
+            red := FALSE;
+            yellow := TRUE;
+            timerYellow(IN:= TRUE, PT:= T#10S);
+        END_IF
+
+        // Gestione stato giallo
+        IF timerYellow.Q THEN
+            yellow := FALSE;
+            green := TRUE;
+            timerGreen(IN:= TRUE, PT:= T#10S);
+        END_IF
+
+        // Gestione stato verde
+        IF timerGreen.Q THEN
+            green := FALSE;
+            red := TRUE;
+            timerRed(IN:= TRUE, PT:= T#10S);
+        END_IF
+    END_IF
+
+    // Gestione del lampeggio
+    IF flashing AND timerFlashing.Q THEN
+        lampFlashing := NOT lampFlashing;
+        timerFlashing(IN:= TRUE, PT:= T#1S);
+    END_IF
+
+    // Uscite per i semafori
+    lampRed := red;
+    lampYellow := yellow;
+    lampGreen := green;
+END_METHOD
+
+// Programma principale
+PROGRAM Main
+    VAR
+        trafficLight: ManageTrafficLight;
+    END_VAR
+
+    // Inizializzazione
+    trafficLight.Init();
+
+    // Ciclo principale
+    CYCLIC
+        // Aggiornamento del semaforo
+        trafficLight.ManageTrafficLight();
+    END_CYCLIC
+END_PROGRAM
